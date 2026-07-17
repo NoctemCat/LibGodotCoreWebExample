@@ -33,10 +33,4 @@ public:
     float get_speed();
     void set_speed(float speed);
 };
-
-enum class Test {
-    One,
-    Two,
-};
-
 } // namespace sample

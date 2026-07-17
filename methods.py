@@ -1,5 +1,6 @@
 import os
 import sys
+import zipfile
 from enum import Enum
 
 # Colors are disabled in non-TTY environments such as pipes. This means
@@ -50,3 +51,24 @@ def print_warning(*values: object) -> None:
 def print_error(*values: object) -> None:
     """Prints an error message with formatting."""
     print(f"{ANSI.RED}{ANSI.BOLD}ERROR:{ANSI.REGULAR}", *values, ANSI.RESET, file=sys.stderr)
+
+
+def build_web_template(target, source, env):
+    zout_path = target[0].srcnode().abspath
+
+    zin = zipfile.ZipFile(source[0].srcnode().abspath, "r")
+    zout = zipfile.ZipFile(zout_path, "w")
+    for item in zin.infolist():
+        buffer = zin.read(item.filename)
+        if item.filename != "godot.js":
+            zout.writestr(item, buffer)
+        else:
+            with open(source[1].srcnode().abspath, "rb") as js_file:
+                file_bytes = bytearray(js_file.read())
+                file_bytes.extend(buffer)
+                zout.writestr(item, file_bytes)
+    zin.close()
+
+    with open(source[2].srcnode().abspath, "rb") as wasm_file:
+        zout.writestr("godot.wasm", wasm_file.read())
+    zout.close()
